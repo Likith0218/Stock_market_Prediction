@@ -1,0 +1,61 @@
+body {
+    background-color: #0e1117;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.block-container {
+    padding-top: 3rem;
+}
+
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: #0e1117;
+    padding: 1rem;
+    z-index: 999;
+    border-bottom: 1px solid #222;
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #39FF14;
+    text-align: center;
+}
+
+.typing-text {
+    color: #bbb;
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.report-card {
+    background-color: #161b22;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 0 15px rgba(39, 255, 171, 0.1);
+}
+
+.report-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 20px rgba(39, 255, 171, 0.3);
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #00bcd4;
+    margin-bottom: 1rem;
+}
+
+.footer {
+    margin-top: 3rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #aaa;
+}
