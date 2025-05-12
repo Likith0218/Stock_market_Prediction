@@ -105,7 +105,7 @@ if st.session_state.analyze_clicked:
 
                 st.plotly_chart(fig, use_container_width=True)
 
-                # REFRESH BUTTON — SHOWN ONLY NOW
+                # REFRESH BUTTON — shown below chart only after analysis
                 if st.button("🔄 Refresh Chart"):
                     st.session_state.do_refresh = True  # Trigger rerun
 
@@ -126,13 +126,17 @@ if st.session_state.analyze_clicked:
         except Exception as e:
             st.error(f"❌ Hourly prediction failed: {e}")
 
-        # MINUTE PREDICTION
+        # MINUTE PREDICTION — FIXED!
         try:
-            price_minute, time_minute = predict_minute(stock_symbol)
-            st.markdown('<div class="report-card">', unsafe_allow_html=True)
-            st.markdown('<div class="section-title">🕒 Minute-Level Prediction</div>', unsafe_allow_html=True)
-            st.markdown(f"**Price:** ₹{price_minute:.2f} at {time_minute.strftime('%H:%M %p')}")
-            st.markdown('</div>', unsafe_allow_html=True)
+            minute_result = predict_minute(stock_symbol)
+            if minute_result is not None:
+                price_minute, time_minute = minute_result
+                st.markdown('<div class="report-card">', unsafe_allow_html=True)
+                st.markdown('<div class="section-title">🕒 Minute-Level Prediction</div>', unsafe_allow_html=True)
+                st.markdown(f"**Price:** ₹{price_minute:.2f} at {time_minute.strftime('%H:%M %p')}")
+                st.markdown('</div>', unsafe_allow_html=True)
+            else:
+                st.warning("⚠️ Minute-level prediction not available — possibly due to insufficient data.")
         except Exception as e:
             st.error(f"❌ Minute prediction failed: {e}")
 
