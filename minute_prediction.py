@@ -1,6 +1,6 @@
 import yfinance as yf
-import numpy as np
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM
@@ -26,13 +26,12 @@ def predict_stock_price(symbol):
 
     if stock_data.isnull().values.any() or len(stock_data) < 61:
         print("Not enough data or missing data points.")
-        return
+        return None
 
     # Get last timestamp (already in UTC), convert to IST
     last_time_utc = stock_data.index[-1]
     predicted_time_ist = last_time_utc + pd.Timedelta(minutes=1)
     predicted_time_ist = predicted_time_ist.tz_convert('Asia/Kolkata')
-
     # Normalize the data
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled_data = scaler.fit_transform(stock_data.values.reshape(-1, 1))
@@ -57,11 +56,3 @@ def predict_stock_price(symbol):
     predicted_price = scaler.inverse_transform(predicted_price)
 
     return predicted_price[0][0], predicted_time_ist
-
-# Run the prediction
-if __name__ == "__main__":
-    symbol = "ITC.NS"  # NSE stock ticker
-    result = predict_stock_price(symbol)
-    if result:
-        price, timestamp = result
-        print(f"Predicted price for {symbol} at {timestamp.strftime('%Y-%m-%d %H:%M %p IST')} is ₹{price:.2f}")
