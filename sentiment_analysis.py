@@ -36,7 +36,7 @@ def classify_sentiment(score):
 
 # Example usage
 if __name__ == "__main__":
-    company = "TCS"
+    company = "BEL"
     news_articles = fetch_news(company)
 
     print(f"\n📰 Latest headlines for {company}:\n")
