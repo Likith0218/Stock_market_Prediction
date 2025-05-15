@@ -60,10 +60,13 @@ if st.sidebar.button("Update", key="update_chart"):
         # Format ticker based on market selection
         if market == "NSE (India)":
             formatted_ticker = f"{ticker.upper()}.NS"
+            currency_symbol = "₹"
         elif market == "BSE (India)":
             formatted_ticker = f"{ticker}.BO"
+            currency_symbol = "₹"
         else:
             formatted_ticker = ticker.upper()
+            currency_symbol = "$"
             
         with st.sidebar:
             with st.spinner('Fetching data...'):
@@ -83,25 +86,41 @@ if st.sidebar.button("Update", key="update_chart"):
                         daily_result = predict_daily(formatted_ticker)
                         if daily_result:
                             current_price, predicted_price, last_date, _ = daily_result
+                            
+                            # Display current price
+                            st.markdown("<p style='font-size:16px; margin-bottom:0'>Current Price</p>", unsafe_allow_html=True)
+                            st.markdown(f"<p style='font-size:24px; font-weight:bold; margin-top:0; color:#00b341; border:2px solid rgba(0, 179, 65, 0.3); background-color: rgba(0, 179, 65, 0.1); padding:8px; display:inline-block; border-radius:4px'>{currency_symbol}{current_price:.2f}</p>", unsafe_allow_html=True)
+                            
+                            # Display daily prediction
+                            st.markdown("<p style='font-size:16px; margin-bottom:0'>Daily Prediction</p>", unsafe_allow_html=True)
+                            st.markdown(f"<p style='font-size:24px; font-weight:bold; margin-top:0; color:#00b341; border:2px solid rgba(0, 179, 65, 0.3); background-color: rgba(0, 179, 65, 0.1); padding:8px; display:inline-block; border-radius:4px'>{currency_symbol}{predicted_price:.2f}</p>", unsafe_allow_html=True)
+                            
+                            # Last updated info
+                            st.markdown(f"<p style='font-size:12px; color:gray'>Last Updated: {last_date}</p>", unsafe_allow_html=True)
+                            
+                            # Display predicted price difference
+                            price_diff = predicted_price - current_price
+                            price_change_pct = (price_diff / current_price) * 100
+                            change_color = "green" if price_diff > 0 else "red"
                             st.markdown(f"""
-                                **Current Price:** ₹{current_price:.2f}
-                                **Daily Prediction:** ₹{predicted_price:.2f}
-                                **Last Updated:** {last_date}
-                            """)
-                        
+                                <p style='font-size:14px; color:{change_color}'>
+                                Expected Change: {currency_symbol}{abs(price_diff):.2f} ({price_change_pct:.2f}%)
+                                </p>
+                            """, unsafe_allow_html=True)
+
                         # Minute Prediction
                         minute_result = predict_minute(formatted_ticker)
                         if minute_result:
                             pred_price, pred_time = minute_result
-                            st.markdown(f"""
-                                **Minute Prediction:** ₹{pred_price:.2f}
-                                **Predicted Time:** {pred_time.strftime('%Y-%m-%d %H:%M %p')}
-                            """)
+                            st.markdown("<p style='font-size:16px; margin-bottom:0'>Minute Prediction</p>", unsafe_allow_html=True)
+                            st.markdown(f"<p style='font-size:24px; font-weight:bold; margin-top:0; color:#00b341; border:2px solid rgba(0, 179, 65, 0.3); background-color: rgba(0, 179, 65, 0.1); padding:8px; display:inline-block; border-radius:4px'>{currency_symbol}{pred_price:.2f}</p>", unsafe_allow_html=True)
+                            st.markdown(f"<p style='font-size:12px; color:gray'>Predicted Time: {pred_time.strftime('%Y-%m-%d %H:%M %p')}</p>", unsafe_allow_html=True)
                         
                         # Hourly Prediction
                         hourly_result = predict_hourly(formatted_ticker)
                         if hourly_result:
-                            st.markdown(f"**Hourly Prediction:** ₹{hourly_result:.2f}")
+                            st.markdown("<p style='font-size:16px; margin-bottom:0'>Hourly Prediction</p>", unsafe_allow_html=True)
+                            st.markdown(f"<p style='font-size:24px; font-weight:bold; margin-top:0; color:#00b341; border:2px solid rgba(0, 179, 65, 0.3); background-color: rgba(0, 179, 65, 0.1); padding:8px; display:inline-block; border-radius:4px'>{currency_symbol}{hourly_result:.2f}</p>", unsafe_allow_html=True)
                         
                         # Display Sentiment Analysis
                         st.subheader("Sentiment Analysis")
