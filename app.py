@@ -1,36 +1,132 @@
 import streamlit as st
-import yfinance as yf
-import plotly.graph_objs as go
+from Prediction import predict_end_of_day_price as predict_daily
+from minute_prediction import predict_stock_price as predict_minute
+from Hourly_stock_predictor import predict_hourly
+from sentiment_analysis import fetch_news, analyze_sentiment, classify_sentiment
+from live_chart import show_tradingview_chart
 
-# Function to fetch live data and plot the chart
-def display_live_stock_chart(stock_symbol):
-    st.subheader(f"📈 Live Stock Price for {stock_symbol}")
-    try:
-        stock_data = yf.download(stock_symbol, period="1d", interval="1m", progress=False)
-        if stock_data.empty:
-            st.warning("No data available for the given stock symbol.")
-            return
+# Page configuration
+st.set_page_config(page_title="Stock Market App", layout="wide")
 
-        # Plot the live stock data
-        fig = go.Figure(data=[go.Scatter(
-            x=stock_data.index,
-            y=stock_data['Close'],
-            mode='lines+markers',
-            name='Close Price'
-        )])
-        fig.update_layout(
-            title=f"Live Stock Prices for {stock_symbol}",
-            xaxis_title="Time",
-            yaxis_title="Price",
-            template="plotly_dark"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"Error fetching stock data: {e}")
+# Helper function to format ticker symbol
+def format_ticker(ticker):
+    """Format ticker symbol for Indian/Global markets"""
+    if any(char.isdigit() for char in ticker):  # Check if ticker contains numbers (like 500325)
+        return f"{ticker}.BO"  # BSE stocks
+    elif "." not in ticker and ticker.isalpha():  # If ticker doesn't have extension and is alphabetic
+        return f"{ticker}.NS"  # NSE stocks
+    return ticker  # Return as is for global markets
 
-# Sidebar for stock selection
-st.sidebar.header("Stock Market Dashboard")
-selected_stock = st.sidebar.text_input("Enter Stock Symbol (e.g., AAPL, TSLA)", value="AAPL")
+# Sidebar - Chart Parameters
+st.sidebar.title("Chart Parameters")
 
-# Call the live chart function
-display_live_stock_chart(selected_stock)
+# Market Selection
+market = st.sidebar.selectbox(
+    "Market",
+    ["NSE (India)", "BSE (India)", "Global Markets"],
+    index=0
+)
+
+# Ticker Input
+ticker = st.sidebar.text_input("Ticker (e.g., RELIANCE for NSE, 500325 for BSE, AAPL for Global)")
+
+# Time Period Dropdown
+time_period = st.sidebar.selectbox(
+    "Time Period",
+    ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "max"],
+    index=0
+)
+
+# Chart Type Dropdown
+chart_type = st.sidebar.selectbox(
+    "Chart Type",
+    ["Candlestick", "Line", "Area", "Bar"],
+    index=0
+)
+
+# Technical Indicators Multi-select
+technical_indicators = st.sidebar.multiselect(
+    "Technical Indicators",
+    ["Simple Moving Average (SMA)", "Exponential Moving Average (EMA)", "Bollinger Bands"],
+    default=["Simple Moving Average (SMA)", "Exponential Moving Average (EMA)"]
+)
+
+# Initialize formatted_ticker as None
+formatted_ticker = None
+
+# Update Button
+if st.sidebar.button("Update", key="update_chart"):
+    if ticker:
+        # Format ticker based on market selection
+        if market == "NSE (India)":
+            formatted_ticker = f"{ticker.upper()}.NS"
+        elif market == "BSE (India)":
+            formatted_ticker = f"{ticker}.BO"
+        else:
+            formatted_ticker = ticker.upper()
+            
+        with st.sidebar:
+            with st.spinner('Fetching data...'):
+                try:
+                    # Get sentiment analysis results using company name without extension
+                    company_name = ticker.split('.')[0]  # Remove extension for news search
+                    news_articles = fetch_news(company_name)
+                    
+                    if news_articles:
+                        sentiment_score = analyze_sentiment(news_articles)
+                        sentiment_label = classify_sentiment(sentiment_score)
+                        
+                        # Display Price Predictions with formatted ticker
+                        st.subheader("Price Predictions")
+                        
+                        # Daily Prediction
+                        daily_result = predict_daily(formatted_ticker)
+                        if daily_result:
+                            current_price, predicted_price, last_date, _ = daily_result
+                            st.markdown(f"""
+                                **Current Price:** ₹{current_price:.2f}
+                                **Daily Prediction:** ₹{predicted_price:.2f}
+                                **Last Updated:** {last_date}
+                            """)
+                        
+                        # Minute Prediction
+                        minute_result = predict_minute(formatted_ticker)
+                        if minute_result:
+                            pred_price, pred_time = minute_result
+                            st.markdown(f"""
+                                **Minute Prediction:** ₹{pred_price:.2f}
+                                **Predicted Time:** {pred_time.strftime('%Y-%m-%d %H:%M %p')}
+                            """)
+                        
+                        # Hourly Prediction
+                        hourly_result = predict_hourly(formatted_ticker)
+                        if hourly_result:
+                            st.markdown(f"**Hourly Prediction:** ₹{hourly_result:.2f}")
+                        
+                        # Display Sentiment Analysis
+                        st.subheader("Sentiment Analysis")
+                        st.markdown(f"""
+                            **Sentiment Score:** {sentiment_score:.3f}
+                            **Market Sentiment:** {sentiment_label}
+                        """)
+                        
+                        # Display News Headlines
+                        st.subheader("Latest News")
+                        for headline in news_articles:
+                            st.markdown(f"- {headline}")
+                    
+                except Exception as e:
+                    st.error(f"Error fetching data: {str(e)}")
+    else:
+        st.sidebar.warning("Please enter a ticker symbol")
+
+# Main Chart Section
+st.title("📈 TradingView Chart")
+if formatted_ticker:
+    show_tradingview_chart(ticker=formatted_ticker, timeframe=time_period)
+else:
+    # Show default chart or message when no ticker is selected
+    st.info("Enter a ticker symbol and click Update to view the chart")
+    show_tradingview_chart(ticker="AAPL", timeframe=time_period)  # Default chart
+
+# ...existing CSS styling code...
